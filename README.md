@@ -12,6 +12,14 @@ KDT is the experimental Kyber-Dilithium Toolset - like GPG, but post-quantum! It
 - [x] Signing and signature verification (CRYSTALS-Dilithium)
 - [ ] Improve user friendliness
 
+## Support
+You can donate to this project at the following XMR (Monero) address:
+```
+864trCfnFsqBnYNhTzvWkPi7q2EpxwmcThufrWgfKze52jGM62BTuq1KombDnBpxhMBt1MNTqkNoAcJTYN8P57smJJg7SPv
+```
+
+Donations motivate me to continue developing this project, but they aren't required!
+
 ---
 
 Developed with <3 by [Mirai](https://git.disroot.org/mirai).
