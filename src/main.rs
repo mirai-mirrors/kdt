@@ -1,3 +1,7 @@
+// -- unit testing module --
+#[cfg(test)]
+mod tests;
+
 // -- imports --
 mod arguments;
 mod core;
