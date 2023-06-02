@@ -9,7 +9,7 @@ KDT is the experimental Kyber-Dilithium Toolset - like GPG, but post-quantum! It
 - [x] Store keyset and private keys in local files
 - [x] Asymmetric encryption and decryption (CRYSTALS-Kyber-backed 256 bit AES)
 - [ ] Wrap encryption with RSA to undoubtedly achieve the verified cryptographic strength of RSA (because CRYSTALS-Kyber's security hasn't been completely verified)
-- [ ] Signing and signature verification (CRYSTALS-Dilithium)
+- [x] Signing and signature verification (CRYSTALS-Dilithium)
 - [ ] Improve user friendliness
 
 ---
