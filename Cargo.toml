@@ -1,0 +1,25 @@
+[package]
+name = "kdt"
+version = "0.1.0-alpha"
+edition = "2021"
+
+[dependencies]
+rand = "0.8.5"
+pqc_kyber = { git = "https://github.com/Argyle-Software/kyber.git", features = ["std", "kyber1024"] }
+# normal dilithium lib with a patch to create `Keypair`s from their values
+pqc_dilithium = { path = "./dilithium/" }
+base64 = "0.21.2"
+aes-gcm = "0.10.2"
+generic-array = "0.14.7"
+clap = { version = "4.3.0", features = ["derive"] }
+sha2 = "0.10.6"
+colored = "2.0.0"
+ron = "0.8.0"
+serde = { version = "1.0.163", features = ["derive"] }
+
+[profile.release]
+strip = true
+opt-level = 3
+codegen-units = 1
+lto = true
+panic = "abort"

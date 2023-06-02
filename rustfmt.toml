@@ -1,0 +1,7 @@
+unstable_features = true
+wrap_comments = true
+comment_width = 100
+control_brace_style = "AlwaysSameLine"
+fn_params_layout = "Compressed"
+reorder_imports = true
+imports_layout = "Vertical"
