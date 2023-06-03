@@ -18,15 +18,15 @@ impl OwnedKeySet {
         let encryption_keys = kyber_keypair(&mut rand::thread_rng());
         let signage_keys = dilithium_keypair::generate();
         let pubkey_pair = PubKeyPair::new(
-            Base64::encode_bytes(&encryption_keys.public),
-            Base64::encode_bytes(&signage_keys.public),
-            Base64::encode_bytes(owner_name.as_bytes()),
+            encryption_keys.public.to_vec(),
+            signage_keys.public.to_vec(),
+            owner_name.clone(),
         )
         .init();
         let privkey_pair = PrivKeyPair::new(
-            Base64::encode_bytes(&encryption_keys.secret),
-            Base64::encode_bytes(&signage_keys.expose_secret()),
-            Base64::encode_bytes(owner_name.as_bytes()),
+            encryption_keys.secret.to_vec(),
+            signage_keys.expose_secret().to_vec(),
+            owner_name,
         )
         .init();
 

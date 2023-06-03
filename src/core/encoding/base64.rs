@@ -21,6 +21,8 @@ impl Base64 {
     /// Converts a base64 string to a bytearray.
     #[inline(always)]
     pub fn decode_string<S: fmt::Display>(s: S) -> Vec<u8> {
-        general_purpose::STANDARD.decode(s.to_string()).unwrap()
+        general_purpose::STANDARD
+            .decode(s.to_string())
+            .unwrap()
     }
 }

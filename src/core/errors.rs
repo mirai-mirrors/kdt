@@ -12,10 +12,10 @@ pub enum KdtErr {
     PrivDbOpenFailed,
     DbDumpFailed,
     KeyAlreadyExists,
+    BadKeyId,
 }
 
 impl fmt::Display for KdtErr {
-    #[inline(always)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::TooManyArgs => write!(
@@ -26,6 +26,7 @@ impl fmt::Display for KdtErr {
             Self::PrivDbOpenFailed => write!(f, "Failed to open private keys database!"),
             Self::DbDumpFailed => write!(f, "Failed to dump to database!"),
             Self::KeyAlreadyExists => write!(f, "This key already exists in the database!"),
+            Self::BadKeyId => write!(f, "The key id you passed is invalid!"),
         }
     }
 }

@@ -6,7 +6,7 @@ use std::error::Error;
 // -- clap options --
 /// Mirai's experimental, quantum-safe successor to GPG
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None, arg_required_else_help = true)]
 pub struct Args {
     /// Generates a new KDT owned key set and stores it in the
     /// local owned key database
@@ -79,6 +79,7 @@ impl Args {
         .count()
     }
 
+    #[inline(always)]
     pub fn fail_if_invalid(&self) -> Result<(), Box<dyn Error>> {
         if self.get_num_called() > 1 {
             return Err(Box::new(KdtErr::TooManyArgs));

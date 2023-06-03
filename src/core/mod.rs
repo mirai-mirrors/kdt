@@ -1,5 +1,5 @@
 // -- compiler flags --
-#![allow(unused_imports)]
+//#![allow(unused_imports)]
 
 // -- local modules (+ exports) --
 pub mod crypto;
@@ -7,6 +7,7 @@ pub mod encoding;
 pub mod errors;
 pub mod keys;
 pub mod logging;
+pub mod message;
 pub mod signing;
 
 pub use crypto::*;
@@ -14,9 +15,11 @@ pub use encoding::*;
 pub use errors::*;
 pub use keys::*;
 pub use logging::*;
+pub use message::*;
 pub use signing::*;
 
 // -- external imports --
+use pqc_dilithium::Keypair;
 use ron::{
     de::from_reader,
     ser::{
@@ -31,14 +34,8 @@ use serde::{
 use std::{
     error::Error,
     fmt,
-    fs::{
-        self,
-        File,
-    },
-    io::{
-        Read,
-        Write,
-    },
+    fs::File,
+    io::Write,
     path::Path,
 };
 
@@ -138,14 +135,13 @@ impl CoreKdtHandler {
         // Construct a public key using the given string
         let pubkey = PubKeyPair::from_str(pubkey_str.to_string()).init();
         // Make sure this public key isn't already registered to the database
-        if self
+        if !self
             .pubkey_db
             .keys
             .iter()
             .filter(|k| k.id == pubkey.id)
             .collect::<Vec<_>>()
-            .len()
-            != 0
+            .is_empty()
         {
             Err(Box::new(KdtErr::KeyAlreadyExists))
         } else {
@@ -181,42 +177,48 @@ impl CoreKdtHandler {
     /// Encrypts the given message against the public key of the given
     /// id.
     pub fn encrypt(&self, pubkey_id: String, text: String) -> String {
-        let public_key = self.pubkey_db.get_by_id(pubkey_id).to_string();
-        KdtCryptoHandler::encrypt_text(text, public_key)
+        let public_key = self.pubkey_db.get_by_id(pubkey_id).unwrap();
+        KdtCryptoHandler::encrypt_text(text, public_key.crypto_key)
             .unwrap()
             .to_string()
     }
 
     /// Decrypts the given message with the private key of the given id.
     pub fn decrypt(&self, privkey_id: String, message: String) -> String {
-        let message = Message::from_str(message);
+        let message = KdtEncryptedMessage::from_str(message);
         let private_key = self
             .ownedkey_db
             .get_by_id(privkey_id)
+            .unwrap()
             .privkey_pair
             .crypto_key;
-        KdtCryptoHandler::decrypt_msg(message, private_key).to_string()
+        KdtCryptoHandler::decrypt_msg(message, private_key)
     }
 
     /// Signs the given message with the private key of the given id.
-    pub fn sign(&self, privkey_id: String, text: String) -> String {
+    pub fn sign(&self, privkey_id: String, text: String) -> Result<String, Box<dyn Error>> {
         let signing_pubkey = self
             .ownedkey_db
-            .get_by_id(privkey_id.clone())
+            .get_by_id(privkey_id.clone())?
             .pubkey_pair
             .signage_key;
         let signing_privkey = self
             .ownedkey_db
-            .get_by_id(privkey_id.clone())
+            .get_by_id(privkey_id)?
             .privkey_pair
             .signage_key;
-        KdtSignageHandler::sign_text(text, signing_privkey, signing_pubkey).to_string()
+        let keypair = Keypair::restore_from_keys(signing_pubkey, signing_privkey);
+        Ok(KdtSignageHandler::sign_text(text, keypair))
     }
 
     /// Verifies the given KDT-signed message with the public key of the
     /// given id.
     pub fn verify(&self, pubkey_id: String, full_text: String) -> Option<bool> {
-        let verification_pubkey = self.pubkey_db.get_by_id(pubkey_id).signage_key;
+        let verification_pubkey = self
+            .pubkey_db
+            .get_by_id(pubkey_id)
+            .unwrap()
+            .signage_key;
         let parts: Vec<String> = full_text
             .chars()
             .skip(35)
@@ -227,11 +229,8 @@ impl CoreKdtHandler {
             .map(String::from)
             .collect();
         let text = parts.first()?.trim().to_owned();
-        let signature = parts.last()?.replace("\n", "");
-        Some(KdtSignageHandler::verify(
-            text,
-            signature,
-            verification_pubkey,
-        ))
+        let signature = parts.last()?.replace('\n', "");
+        let message = KdtSignedMessage::new(text, Base64::decode_string(signature));
+        Some(KdtSignageHandler::verify(message, verification_pubkey))
     }
 }

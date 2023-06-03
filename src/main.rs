@@ -1,3 +1,4 @@
+// TODO: finish refactor!
 // -- unit testing module --
 #[cfg(test)]
 mod tests;
@@ -15,11 +16,6 @@ fn main() {
     if let Err(e) = args.fail_if_invalid() {
         logger.fatal(e);
     }
-    if args.get_num_called() == 0 {
-        logger.fatal(
-            "You didn't pass any arguments! Run `kdt -h` for a list of possible flags and args.",
-        );
-    }
     let mut kdt = match CoreKdtHandler::new() {
         Ok(k) => k,
         Err(e) => logger.fatal(e),
@@ -35,7 +31,10 @@ fn main() {
             logger.success(format!("Public key for key id {}:", pubkey_id));
             println!(
                 "{}",
-                kdt.ownedkey_db.get_by_id(pubkey_id).pubkey_pair.to_string()
+                kdt.ownedkey_db
+                    .get_by_id(pubkey_id)
+                    .unwrap()
+                    .pubkey_pair
             );
         }
         // `--del-pubkey`
@@ -72,7 +71,7 @@ fn main() {
             logger.info("Input the message to sign below (CTRL-D to finish):");
             let message = logger.input();
             logger.info("Signed message:");
-            println!("{}", kdt.sign(privkey_id, message));
+            println!("{}", kdt.sign(privkey_id, message).unwrap());
         }
         // `-v | --verify`
         if let Some(pubkey_id) = args.verify {
@@ -102,7 +101,7 @@ fn main() {
                 println!(
                     "ID: {}\nOwner: {}",
                     key.privkey_pair.id,
-                    String::from_utf8_lossy(&Base64::decode_string(key.clone().privkey_pair.owner))
+                    key.clone().privkey_pair.owner
                 );
             }
         }
@@ -143,11 +142,7 @@ fn main() {
             }
             logger.info("Keys in your public key database:");
             for key in &kdt.pubkey_db.keys {
-                println!(
-                    "ID: {}\nOwner: {}",
-                    key.id,
-                    String::from_utf8_lossy(&Base64::decode_string(key.clone().owner))
-                );
+                println!("ID: {}\nOwner: {}", key.id, key.clone().owner);
             }
         }
     }

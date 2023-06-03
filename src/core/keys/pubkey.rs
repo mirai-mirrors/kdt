@@ -1,4 +1,5 @@
 // -- imports --
+use crate::core::*;
 use serde::{
     Deserialize,
     Serialize,
@@ -12,16 +13,13 @@ use std::fmt;
 // -- public key pair (signing key + crypto key) --
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PubKeyPair {
-    /// Base64-encoded bytes for public cryptographic
-    /// (ie Kyber) key.
-    pub crypto_key: String,
+    /// Kyber public key bytes
+    pub crypto_key: Vec<u8>,
 
-    /// Base64-encoded bytes for public signage
-    /// (ie Dilithium) key.
-    pub signage_key: String,
+    /// Dilithium public key bytes
+    pub signage_key: Vec<u8>,
 
-    /// Base64-encoded representation of the key
-    /// owner's name.
+    /// Key owner's name as a string.
     pub owner: String,
 
     /// Sha256 hashsum of this object when the two
@@ -34,11 +32,10 @@ pub struct PubKeyPair {
 }
 
 impl PubKeyPair {
-    /// Creates a new `PubKeyPair` object from the provided cryptographic key
-    /// base64 string, the provided signage key string, and the owner base64
-    /// string. This doesn't validate the passed inputs, so it *will* panic if
-    /// you pass bad inputs.
-    pub fn new(crypto_key: String, signage_key: String, owner: String) -> Self {
+    /// Creates a new `PubKeyPair` object from the provided key
+    /// bytearrays and owner string.
+    #[inline(always)]
+    pub fn new(crypto_key: Vec<u8>, signage_key: Vec<u8>, owner: String) -> Self {
         Self {
             crypto_key,
             signage_key,
@@ -61,7 +58,7 @@ impl PubKeyPair {
     /// key string. Doesn't validate input, so it *will* panic if you pass
     /// invalid inputs.
     pub fn from_str(pubkey_str: String) -> Self {
-        let pubkey: Vec<String> = pubkey_str
+        let pubkey: Vec<Vec<u8>> = pubkey_str
             .chars()
             // Removes the `-----BEGIN KDT PUBKEY BLOCK-----` header.
             .skip(32)
@@ -70,16 +67,17 @@ impl PubKeyPair {
             .collect::<String>()
             // Turns the human-readable formatting to something that can be parsed
             // programmatically.
-            .replace("\n", "")
+            .replace('\n', "")
             // Splits the public key into a cryptographic key and signage key.
             .split('*')
             .map(String::from)
+            .map(Base64::decode_string)
             .collect();
 
         Self {
             crypto_key: pubkey[0].to_owned(),
             signage_key: pubkey[1].to_owned(),
-            owner: pubkey[2].to_owned(),
+            owner: String::from_utf8_lossy(&pubkey[2]).to_string(),
             id: String::new(),
         }
     }
@@ -88,9 +86,12 @@ impl PubKeyPair {
 // -- human-readable key output impl --
 impl fmt::Display for PubKeyPair {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let crypto_key = Base64::encode_bytes(&self.crypto_key);
+        let signage_key = Base64::encode_bytes(&self.signage_key);
+        let owner = Base64::encode_bytes(self.owner.as_bytes());
         // An asterisk separates the encryption key from the
         // signing key during key exchanges.
-        let keypair = format!("{}*{}*{}", &self.crypto_key, &self.signage_key, &self.owner)
+        let keypair = format!("{}*{}*{}", crypto_key, signage_key, owner)
             .chars()
             .enumerate()
             // This helps maintain readability when printing messages. It

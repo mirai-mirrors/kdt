@@ -21,7 +21,15 @@ _main () {
   # alias for easy usage
   alias rustup="$HOME/.cargo/bin/rustup"
 
+  echo "Updating nightly toolchain..."
   rustup toolchain install nightly-x86_64-unknown-linux-gnu &>/dev/null
+  echo "Updated nightly toolchain!"
+  echo "Updating cargo-clippy..."
+  rustup component add clippy &>/dev/null
+  echo "Updated cargo-clippy!"
+  echo "Using clippy to fix common mistakes..."
+  rustup run stable cargo clippy
+  echo "Clippy is done!"
   echo "Formatting code..."
   rustup run nightly cargo fmt
   echo "Formatted code!"

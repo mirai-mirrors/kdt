@@ -17,12 +17,16 @@ pub struct PubKeyDb {
 impl PubKeyDb {
     /// Takes in the hexadecimal string id of a public key, and returns
     /// the public key object.
-    pub fn get_by_id(&self, id: String) -> PubKeyPair {
-        let filtered = self.keys.iter().filter(|k| k.id == id).collect::<Vec<_>>();
-        if filtered.len() > 1 {
-            unreachable!();
+    pub fn get_by_id(&self, id: String) -> Result<PubKeyPair, Box<dyn Error>> {
+        let filtered = self
+            .keys
+            .iter()
+            .filter(|k| k.id == id)
+            .collect::<Vec<_>>();
+        if filtered.len() != 1 {
+            Err(Box::new(KdtErr::BadKeyId))
         } else {
-            filtered[0].clone()
+            Ok(filtered[0].clone())
         }
     }
 
@@ -47,16 +51,16 @@ pub struct OwnedKeyDb {
 impl OwnedKeyDb {
     /// Takes in the hexadecimal string id of a private key,
     /// and returns the private-public key pair.
-    pub fn get_by_id(&self, id: String) -> OwnedKeySet {
+    pub fn get_by_id(&self, id: String) -> Result<OwnedKeySet, Box<dyn Error>> {
         let filtered = self
             .keys
             .iter()
             .filter(|k| k.privkey_pair.id == id)
             .collect::<Vec<_>>();
-        if filtered.len() > 1 {
-            unreachable!();
+        if filtered.len() != 1 {
+            Err(Box::new(KdtErr::BadKeyId))
         } else {
-            filtered[0].clone()
+            Ok(filtered[0].clone())
         }
     }
 
